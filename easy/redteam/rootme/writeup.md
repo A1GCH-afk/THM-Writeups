@@ -21,6 +21,7 @@ This writeup walks through a full compromise of a target machine in a training l
 To get a fast overview of open ports on the target, `threader3000` was used — a multi-threaded port scanner that speeds up initial discovery before a deeper Nmap scan.
 
 ```bash
+# pip install threader3000 --break-system-packages
 threader3000
 ```
 
