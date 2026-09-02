@@ -1,6 +1,6 @@
 # NULLSECURE - FROM NULL TO ROOT
 
-**Video:** [Watch on YouTube](#)
+**Video:** [Watch on YouTube](https://youtu.be/2lByVAA4VxQ)
 
 ---
 
