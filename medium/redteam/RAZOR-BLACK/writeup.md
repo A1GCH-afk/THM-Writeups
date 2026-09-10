@@ -2,7 +2,7 @@
 
 ## RazorBlack — TryHackMe Walkthrough
 
-📺 **Video Walkthrough:** [ADD YOUTUBE LINK HERE]
+📺 **Video Walkthrough:** https://youtu.be/33RJpdvgNR0
 
 ---
 
