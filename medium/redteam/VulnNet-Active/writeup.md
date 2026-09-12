@@ -4,7 +4,7 @@
 **Platform:** TryHackMe
 **Difficulty:** Medium
 **Category:** Windows / Active Directory
-**Video:** [https://youtu.be/wiq3w-R0K8o]
+**Video:** [YOUTUBE VIDEO LINK]
 
 ---
 
@@ -117,7 +117,7 @@ get PurgeIrrelevantData_1826.ps1
 
 ![smbclient - pulling the scheduled script](Images/07-smbclient-get.png)
 
-**Hijacking the scheduled script:** rather than uploading a brand-new file (which may not get executed), the nishang reverse-shell payload is placed inside a file with the *same name* as the legitimate script:
+**Hijacking the scheduled script:** rather than uploading a brand-new file (which may not get executed), the [nishang](https://github.com/samratashok/nishang) reverse-shell payload is placed inside a file with the *same name* as the legitimate script:
 
 ```bash
 cp nishang/Shells/Invoke-PowerShellTcp.ps1 ./PurgeIrrelevantData_1826.ps1
@@ -167,7 +167,7 @@ net users
 ![Hosting the PoC](Images/10-http-server.png)
 ![Invoke-Nightmare + net users](Images/11-invoke-nightmare.png)
 
-The exploit (PoC by calebstewart) abuses a Print Spooler RPC flaw to create a new local administrator — by default `adm1n:P@ssw0rd` (a custom `-NewUser`/`-NewPassword` pair also works). Use those credentials to pop a SYSTEM shell via Impacket:
+The exploit ([PoC by calebstewart](https://github.com/calebstewart/CVE-2021-1675)) abuses a Print Spooler RPC flaw to create a new local administrator — by default `adm1n:P@ssw0rd` (a custom `-NewUser`/`-NewPassword` pair also works). Use those credentials to pop a SYSTEM shell via Impacket:
 
 ```bash
 impacket-psexec 'adm1n:P@ssw0rd@<TARGET-IP>'
@@ -205,6 +205,13 @@ type system.txt
 ## 8. Attack Chain Summary
 
 Exposed, unauthenticated Redis → `CONFIG SET dir` to a UNC path leaks an NTLMv2 hash to a rogue SMB listener → hash cracked offline with Hashcat → valid `ENTERPRISE-SECURITY` domain credentials → writable `Enterprise-Share` discovered → scheduled PowerShell script hijacked with a nishang reverse shell → low-privileged shell + user flag → PrintNightmare (CVE-2021-1675) creates a local admin → impacket-psexec → `NT AUTHORITY\SYSTEM` → root flag.
+
+---
+
+## Credits
+
+- PrintNightmare PoC (CVE-2021-1675): https://github.com/calebstewart/CVE-2021-1675
+- Nishang: https://github.com/samratashok/nishang
 
 ---
 
