@@ -4,7 +4,7 @@
 **Platform:** TryHackMe
 **Difficulty:** Medium
 **Category:** Windows / Active Directory
-**Video:** [YOUTUBE VIDEO LINK]
+**Video:** https://youtu.be/wiq3w-R0K8o
 
 ---
 
