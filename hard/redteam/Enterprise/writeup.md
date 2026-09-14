@@ -1,6 +1,6 @@
 # NULLSECURE - FROM NULL TO ROOT
 
-🎥 Video Walkthrough: [VIDEO LINK]
+🎥 Video Walkthrough: [[VIDEO LINK](https://youtu.be/-N5jcbFljgQ)]
 
 # Enterprise — TryHackMe Full Walkthrough
 
