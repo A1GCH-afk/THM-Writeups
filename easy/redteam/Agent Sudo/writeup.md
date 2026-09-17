@@ -53,7 +53,7 @@ Moved to the web service on port 80.
 
 ![web page on port 80](Images/1.jpeg)
 ![web page on port 80 — continued](Images/2.jpeg)
-![web page on port 80 — continued](Images/3-1.jpeg)
+![web page on port 80 — continued](Images/3.jpeg)
 
 The page title read "Annoucement" (typo included) and carried a note signed by someone going by **Agent R**, instructing visitors to set their own codename as the HTTP `User-Agent` header before the real content would be served. No codename was given up front — that had to be brute-forced.
 
