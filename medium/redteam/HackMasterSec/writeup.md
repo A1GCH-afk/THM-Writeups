@@ -1,6 +1,6 @@
 # NULLSECURE - FROM NULL TO ROOT
 
-**🎥 Video Walkthrough:** [Hack Smarter Security — Full Walkthrough](https://youtu.be/3M8I9StdL10)
+**🎥 Video Walkthrough:** [Hack Smarter Security — Full Walkthrough](https://youtu.be/DzNgo5ZQi9A)
 **🔗 Room:** [TryHackMe — Hack Smarter Security](https://tryhackme.com/room/hacksmartersecurity)
 
 ---
